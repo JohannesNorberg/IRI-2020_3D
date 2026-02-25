@@ -39,7 +39,7 @@ c-----------------------------------------------------------------------
       REAL              B0, B1    
       
       INTEGER           iostat_alt, alt_count
-	  REAL              alt_values(100)        
+	  REAL              alt_values(1000)        
 
       DATA  IMZ  /' km ','GEOD','GEOD','yyyy',' mm ',' dd ','YEAR',
      &      'L.T.'/, ITEXT/'  H  ',' LATI',
@@ -120,8 +120,8 @@ C     input_filename = year_str//date_str//second_str//'_param.txt'
 
       OPEN(UNIT=11, FILE=output_filename, STATUS='UNKNOWN')
 
-      WRITE(11,8191) 'lat', 'lon', 'alt', 'NmF2'
-8191  FORMAT(2X,A5,A7,A8,A7)
+      WRITE(11,8191) 'lat', 'long', 'alt', 'Ne'
+8191  FORMAT(2X,A5,A7,A9,A7)
 
 
 c Input from txt file
@@ -133,15 +133,20 @@ c Input from txt file
 
 	  alt_count = 0
 	  DO WHILE (iostat_alt == 0)
-		 READ(13, *, IOSTAT=iostat_alt) alt
-		 IF (iostat_alt == 0) THEN
-			alt_count = alt_count + 1
-			alt_values(alt_count) = alt
-		 END IF
+	    READ(13, *, IOSTAT=iostat_alt) alt
+		IF (iostat_alt == 0) THEN
+		  alt_count = alt_count + 1
+		  alt_values(alt_count) = alt
+		END IF 	 
 	  END DO
-	  
       CLOSE(13)  
       
+C     These are not used as altitude grid, but are required for condition in  irisub.for
+C     to indicate that there are several altitude steps
+C     After that alt_values are used
+      vbeg = alt_values(1) 
+      vend = alt_values(alt_count)
+      vstp = 10
 
       OPEN(UNIT=12, FILE=input_filename, STATUS='OLD', IOSTAT=iostat)
       IF (iostat /= 0) THEN
@@ -161,112 +166,92 @@ C     PRINT *, 'line ', line
 
 
       DO 100 WHILE (iostat == 0)
-      READ(12, *, IOSTAT=iostat) lat, lon, NmF2, hmF2,
-     +  NmE, hmE, B0, B1                                    
 C        PRINT *, 'IOSTAT:', iostat                
-          IF (iostat == 0) THEN
 C            PRINT *, 'Lat:', lat, 'Lon:', lon
 C            PRINT *, 'NmF2: ', NmF2, 'hmF2: ', hmF2
 C            PRINT *, 'NmE: ', NmE, 'hmE: ', hmE             
 C            PRINT *, 'B0: ', B0, 'B1: ', B1                          
-      
-			 xlat = lat
-			 xlon = lon			 
-			 jm=0              ! (=0/1,geog/geom)
-            
-C        Standard IRI model
+                  
              IF(jchoice.eq.0) THEN
-			   DO i=1,50 
-					 jf(i)=.true.
-			   ENDDO
-	 
-			   jf(4)=.false.      ! t=B0table f=other models (f)
-			   jf(5)=.false.      ! t=CCIR  f=URSI foF2 model (f)
-			   jf(6)=.false.      ! t=DS95+DY85   f=RBV10+TBT15 (f)
-			   jf(23)=.false.     ! t=AEROS/ISIS f=TTS Te with PF10.7 (f)
-			   jf(29)=.false.     ! t=old  f=New Topside options (f)
-			   jf(30)=.false.     ! t=corr f=NeQuick topside (f)
-			   jf(33)=.false. 	  ! t=auroral boundary   f=off (f)
-			   jf(34)=.false. 
-			   jf(35)=.false. 	  ! t=auroral E-storm model on f=off (f)
-			   jf(39)=.false. 	  ! t=M3000F2 model f=new hmF2 models (f)
-			   jf(47)=.false. 	  ! t=CGM on  f=CGM off (f)
-			 ELSE 
-C              Switches ON			   
-			   jf(1) = .true.     ! Ne computed
-			   jf(2) = .true.     ! Te, Ti computed
-			   jf(3) = .true.     ! Ne & Ni computed
-			   jf(4) = .false.    ! B0,B1 - Bil-2000 (false = other models jf(31))
-			   jf(5) = .false.    ! foF2 - CCIR (false = URSI)
-			   jf(6) = .false.    ! Ni - DS-1995 & DY-1985 (false = RBV-2010 & TBT-2015)
-			   jf(7) = .true.     ! Ne - Tops: f10.7<188
-			   jf(8) = .false.   ! foF2 from model
-			   jf(9) = .false.   ! hmF2 from model
-			   jf(10) = .true.    ! Te - Standard
-			   jf(11) = .true.    ! Ne - Standard Profile
-			   jf(12) = .false.   ! Messages to unit 6
-			   jf(13) = .true.    ! foF1 from model
-			   jf(14) = .true.    ! hmF1 from model
-			   jf(15) = .false.  ! foE from model
-			   jf(16) = .false.  ! hmE from model
-			   jf(17) = .true.    ! Rz12 from file
-			   jf(18) = .true.    ! IGRF dip, magbr, modip
-			   jf(19) = .true.    ! F1 probability model
-			   jf(20) = .true.    ! standard F1
-			   jf(21) = .true.    ! ion drift computed
-			   jf(22) = .true.    ! ion densities in %
-			   jf(23) = .false.   ! Te_tops (Bil-1985) (false = TBT-2012)
-			   jf(24) = .true.    ! D-region: IRI-1990
-			   jf(25) = .true.    ! F107D from APF107.DAT
-			   jf(26) = .false.  ! foF2 storm model. off, if user input
-			   jf(27) = .true.    ! IG12 from file
-			   jf(28) = .true.    ! spread-F probability
-			   jf(29) = .false.   ! IRI01-topside (false = new options as defined by JF(30))
-			   jf(30) = .false.   ! IRI01-topside corr. (false = NeQuick topside model)
-			   jf(31) = .true.    ! B0,B1 ABT-2009 (false = B0 Gulyaeva-1987 h0.5)
-			   jf(32) = .true.    ! F10.7_81 from file
-			   jf(33) = .false.   ! Auroral boundary model on/off
-			   jf(34) = .false.    ! Messages on
-			   jf(35) = .false.   ! foE storm model
-			   jf(36) = .true.    ! hmF2 w/out foF2_storm
-			   jf(37) = .true.    ! topside w/out foF2-storm
-			   jf(38) = .true.    ! turn WRITEs off in IRIFLIP
-			   jf(39) = .false.   ! hmF2 (M3000F2)
-			   jf(40) = .true.    ! hmF2 AMTB-model (false = Shubin-COSMIc model)
-			   jf(41) = .true.    ! Use COV=F10.7_365
-			   jf(42) = .true.    ! Te with PF10.7 dep.
-			   jf(43) = .false.  ! B0 from model
-			   jf(44) = .false.  ! B1 from model
-			   jf(45) = .true.    ! not used
-			   jf(46) = .true.    ! not used
-			   jf(47) = .false.   ! CGM computation on/off
-			   jf(48) = .true.    ! Ti Tru-2021
-			   jf(49) = .true.    ! Plasmasphere: Ozhogin
-			   jf(50) = .true.    ! without plasmapause
-			 ENDIF      
-       
+			   READ(12, *, IOSTAT=iostat) lat, lon
+               IF (iostat == 0) THEN             
+C            Standard IRI model
+				 DO i=1,50 
+					   jf(i)=.true.
+				 ENDDO
+	   
+				 jf(4)=.false.      ! t=B0table f=other models (f)
+				 jf(5)=.false.      ! t=CCIR  f=URSI foF2 model (f)
+				 jf(6)=.false.      ! t=DS95+DY85   f=RBV10+TBT15 (f)
+				 jf(23)=.false.     ! t=AEROS/ISIS f=TTS Te with PF10.7 (f)
+				 jf(29)=.false.     ! t=old  f=New Topside options (f)
+				 jf(30)=.false.     ! t=corr f=NeQuick topside (f)
+				 jf(33)=.false. 	  ! t=auroral boundary   f=off (f)
+				 jf(34)=.false. 
+				 jf(35)=.false. 	  ! t=auroral E-storm model on f=off (f)
+				 jf(39)=.false. 	  ! t=M3000F2 model f=new hmF2 models (f)
+				 jf(47)=.false. 	  ! t=CGM on  f=CGM off (f)
+				 
+				 xlat = lat
+				 xlon = lon			 
+				 jm=0              ! (=0/1,geog/geom)
+               ENDIF
+			 ELSE
+			   READ(12, *, IOSTAT=iostat) lat, lon, NmF2, hmF2,
+     +  NmE, hmE, B0, B1
+               IF (iostat == 0) THEN
 
-c jchoice = 1: option to enter measured values for NmF2, hmF2, NmF1, hmF1, NmE, hmE,
-c B0, N(300), N(400), N(600) if available; 
-          
-c --------- user input: foF2 or NmF2                      
-				 oar(1, 1) = NmF2
-				 pname(1) = 'NmF2/m-3'          
-c --------- user input: hmf2 or M(3000)F2            
+c              Start from standard IRI defaults (same as jchoice=0)
+               DO i=1,50
+                 jf(i)=.true.
+               ENDDO
+
+c              Non-parameter model switches (same as jchoice=0)
+               jf(4)=.false.       ! t=B0table f=other models
+               jf(5)=.false.       ! t=CCIR  f=URSI foF2 model
+               jf(6)=.false.       ! t=DS95+DY85   f=RBV10+TBT15
+               jf(23)=.false.      ! t=AEROS/ISIS f=TTS Te with PF10.7
+               jf(29)=.false.      ! t=old  f=New Topside options
+               jf(30)=.false.      ! t=corr f=NeQuick topside
+               jf(33)=.false.      ! t=auroral boundary   f=off
+               jf(34)=.false.      ! t=messages on f=off
+               jf(35)=.false.      ! t=auroral E-storm model on f=off
+               jf(39)=.false.      ! t=M3000F2 model f=new hmF2 models
+               jf(47)=.false.      ! t=CGM on  f=CGM off
+
+c              Per-parameter: use external value if > 0, else IRI model
+c              Sentinel value -1 means "use IRI internal default"
+               IF(NmF2.gt.0) THEN
+                 jf(8) = .false.
+                 oar(1, 1) = NmF2
+                 jf(26) = .false.   ! storm model off when user NmF2
+               ENDIF
+               IF(hmF2.gt.0) THEN
+                 jf(9) = .false.
                  oar(2, 1) = hmF2
-				 pname(2) = 'hmF2/km'          
-c --------- user input: foE or NmE            
-				 oar(5, 1) = NmE
-				 pname(5) = 'NmE/m-3'          
-c --------- user input: hmE                
-				 oar(6, 1) = hmE
-				 pname(6)='hmE/km'
-c --------- user input: B0            
-				 oar(10,1) = B0
-				 pname(7)='B0/km '
-c --------- user input: B1            
-				 oar(35,1) = B1
-				 pname(8)='B1    '
+               ENDIF
+               IF(NmE.gt.0) THEN
+                 jf(15) = .false.
+                 oar(5, 1) = NmE
+               ENDIF
+               IF(hmE.gt.0) THEN
+                 jf(16) = .false.
+                 oar(6, 1) = hmE
+               ENDIF
+               IF(B0.gt.0) THEN
+                 jf(43) = .false.
+                 oar(10, 1) = B0
+               ENDIF
+               IF(B1.gt.0) THEN
+                 jf(44) = .false.
+                 oar(35, 1) = B1
+               ENDIF
+
+               xlat = lat
+               xlon = lon
+               jm=0              ! (=0/1,geog/geom)
+			   ENDIF
+			 ENDIF      
 
 
 C		 IF(jf(1)) THEN
@@ -350,7 +335,7 @@ c    jf(44) =.false.     OARR(35)=user input for B1
 
 c end of user input
 C This is from original code. Not checked if could be removed
-
+      IF (iostat == 0) THEN             
         num1=alt_count
         numstp=iabs(num1)
         IF(numstp.GT.nummax) numstp=nummax
@@ -448,9 +433,10 @@ c output
         
 		jne = outf(1,li) / 1.e6
 		IF(outf(1,li).lt.0) jne = 0
-
+C        PRINT *, 'Lat:', lat, 'Lon:', lon, 'Ne', jne
+        
         WRITE(11,7117) xlat, lon, alt_values(li),jne
-7117    FORMAT(F7.1, F7.1, F7.1, 1x, I7)
+7117    FORMAT(F7.2, 1X, F7.2, 1X, F7.1, 1x, I10)
 
 
 1234  CONTINUE
