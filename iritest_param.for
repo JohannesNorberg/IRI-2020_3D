@@ -3,8 +3,8 @@ c-----------------------------------------------------------------------
 c
 c test program for the iri_web subroutine
 c
-c Intended for use only with rirtiest_ne and iritest_param wrappers. 
-c When used with iritest_ne the altitude vector is taken from alt_ax.txt.
+c Intended for use only with iritest_ne and iritest_param wrappers. 
+c When used with iritest_ne the altitude vector is taken from alt.txt.
 c
 c***********************************************************************
 c!********************* IMPORTANT PLEASE READ **************************        
@@ -253,7 +253,7 @@ C     filename = year_str//date_str//second_str//"_param.txt"
 C       xtex=imz(ivar)
 C       xtex='GEOM'
 
-        WRITE(11,8191) 'lat', 'lon',
+        WRITE(11,8191) 'lat', 'long',
      &    (pna(pad1(j)),j=1,6)
  
  8191  FORMAT(2X,A5,A7,A8,5A10)
@@ -424,7 +424,7 @@ c
          READ(12, *, IOSTAT=iostat) lat, lon
 C        PRINT *, 'IOSTAT:', iostat                
          IF (iostat /= 0) EXIT
-C   	 PRINT *, 'Lat:', lat, 'Lon:', lon
+C	 PRINT *, 'Lat:', lat, 'Lon:', lon
   
 		 xlat = lat
 		 xlon = lon
@@ -469,7 +469,7 @@ c
         WRITE(11,3919) XCOR, xlon, oar(pad1(1),li),oar(pad1(2),li),
      &        oar(pad1(3),li),oar(pad1(4),li),oar(pad1(5),li),
      &        oar(pad1(6),li)
-3919    FORMAT(F7.1, F7.1, 6(1X,1PE9.2))
+3919    FORMAT(F7.2, 1X, F7.2, 6(1X,1PE9.2))
 
 C       GOTO 1234
 

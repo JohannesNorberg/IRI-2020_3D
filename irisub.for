@@ -457,7 +457,8 @@ c      CHARACTER FILNAM*53
 
 
       INTEGER    iostat, alt_count
-	  REAL       alt_values(100)
+	  REAL       alt_values(1000)
+	  REAL       alt
 	  
 
       DIMENSION  ARIG(3),RZAR(3),F(3),E(4),XDELS(4),DNDS(4),
@@ -2221,29 +2222,47 @@ C
 C       height=heibeg
 C       kk=1
 	    xinv=0.0
-
-      OPEN(UNIT=13, FILE='alt.txt', STATUS='OLD', IOSTAT=iostat)
-      IF (iostat /= 0) THEN
-          PRINT *, 'No altitude grid available in alt.txt'
-          STOP
-      ENDIF
-
-	  
+      IF (numhei .GT. 1.0) THEN
+		OPEN(UNIT=13, FILE='alt.txt', STATUS='OLD', IOSTAT=iostat)
+		IF (iostat /= 0) THEN
+			PRINT *, 'No altitude grid available in alt.txt'
+			STOP
+		END IF
+  
+		
+C	alt_count = 0
+C	DO WHILE (iostat == 0)
+C	   READ(13, *, IOSTAT=iostat) alt
+C	   IF (iostat_alt == 0) THEN
+C		  alt_count = alt_count + 1
+C		  alt_values(alt_count) = alt
+C	   END IF
+C	END DO
+    
 	  alt_count = 0
 	  DO WHILE (iostat == 0)
 		 READ(13, *, IOSTAT=iostat) alt
-		 IF (iostat_alt == 0) THEN
+		 IF (iostat == 0) THEN
 			alt_count = alt_count + 1
-			alt_values(alt_count) = alt
+			IF (alt_count <= SIZE(alt_values)) THEN
+			   alt_values(alt_count) = alt
+			ELSE
+			   PRINT *, "Error: alt_values array size exceeded."
+			   EXIT
+			END IF
 		 END IF
 	  END DO
 
-      CLOSE(13)
+	  CLOSE(13)
+  
 
-      kk=1
-      numhei = alt_count
-      height = alt_values(1)
-
+		kk=1
+		numhei = alt_count
+		height = alt_values(1)
+      ELSE
+        height=heibeg
+        kk=1
+      END IF
 
       
 300   CALL SOCO(daynr,HOUR,LATI,LONGI,height,SUNDEC,XHI,SAX,SUX)
@@ -2680,7 +2699,6 @@ c       Here the varying variable is set to its first value
 
           do 1349 iii=1,100
 1349        oarr(iii)=b(iii,i)
-
           call IRI_SUB(JF,JMAG,ALATI,ALONG,IYYYY,MMDD,
      &          DHOUR,HEIGHT,HEIGHT,1.,OUTF,OARR)
           if(h_tec_max.gt.50.) then
