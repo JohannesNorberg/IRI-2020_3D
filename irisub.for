@@ -459,6 +459,8 @@ c      CHARACTER FILNAM*53
       INTEGER    iostat, alt_count
 	  REAL       alt_values(1000)
 	  REAL       alt
+	  INTEGER, SAVE :: alt_count_cached = 0
+	  REAL, SAVE    :: alt_values_cached(1000)
 	  
 
       DIMENSION  ARIG(3),RZAR(3),F(3),E(4),XDELS(4),DNDS(4),
@@ -2223,42 +2225,42 @@ C       height=heibeg
 C       kk=1
 	    xinv=0.0
       IF (numhei .GT. 1.0) THEN
-		OPEN(UNIT=13, FILE='alt.txt', STATUS='OLD', IOSTAT=iostat)
-		IF (iostat /= 0) THEN
-			PRINT *, 'No altitude grid available in alt.txt'
-			STOP
-		END IF
-  
-		
-C	alt_count = 0
-C	DO WHILE (iostat == 0)
-C	   READ(13, *, IOSTAT=iostat) alt
-C	   IF (iostat_alt == 0) THEN
-C		  alt_count = alt_count + 1
-C		  alt_values(alt_count) = alt
-C	   END IF
-C	END DO
-    
-	  alt_count = 0
-	  DO WHILE (iostat == 0)
-		 READ(13, *, IOSTAT=iostat) alt
-		 IF (iostat == 0) THEN
-			alt_count = alt_count + 1
-			IF (alt_count <= SIZE(alt_values)) THEN
-			   alt_values(alt_count) = alt
-			ELSE
-			   PRINT *, "Error: alt_values array size exceeded."
-			   EXIT
-			END IF
-		 END IF
-	  END DO
-
-	  CLOSE(13)
-  
-
-		kk=1
-		numhei = alt_count
-		height = alt_values(1)
+        IF (alt_count_cached .EQ. 0) THEN
+C         Read alt.txt only on first call, then cache
+          OPEN(UNIT=13,FILE='alt.txt',STATUS='OLD',IOSTAT=iostat)
+          IF (iostat /= 0) THEN
+            PRINT *, 'No altitude grid available in alt.txt'
+            STOP
+          END IF
+          alt_count = 0
+          DO WHILE (iostat == 0)
+            READ(13, *, IOSTAT=iostat) alt
+            IF (iostat == 0) THEN
+              alt_count = alt_count + 1
+              IF (alt_count <= SIZE(alt_values)) THEN
+                alt_values(alt_count) = alt
+              ELSE
+                PRINT *, "Error: alt_values array size exceeded."
+                EXIT
+              END IF
+            END IF
+          END DO
+          CLOSE(13)
+C         Cache for subsequent calls
+          alt_count_cached = alt_count
+          DO i=1,alt_count
+            alt_values_cached(i) = alt_values(i)
+          END DO
+        ELSE
+C         Use cached altitude grid
+          alt_count = alt_count_cached
+          DO i=1,alt_count
+            alt_values(i) = alt_values_cached(i)
+          END DO
+        END IF
+        kk=1
+        numhei = alt_count
+        height = alt_values(1)
       ELSE
         height=heibeg
         kk=1
