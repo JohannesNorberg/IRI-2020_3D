@@ -239,6 +239,27 @@ Arguments are the same as `iri_ne`, plus:
 
 > **Note:** Requires `param.txt` and `alt.txt` in the same directory as `run_parallel.sh`.
 
+## Citation & Terms of Use
+
+The IRI model is freely available from [COSPAR](https://cosparhq.cnes.fr/) and
+[URSI](https://www.ursi.org/). There is no formal software license in the
+source distribution. The official source is
+[irimodel.org](http://irimodel.org); it is also distributed through
+[NASA CCMC](https://ccmc.gsfc.nasa.gov/models/IRI~2020/).
+
+**If you use IRI in a publication, please cite:**
+
+> Bilitza, D., Pezzopane, M., Truhlik, V., Altadill, D., Reinisch, B. W.,
+> & Pignalberi, A. (2022). The International Reference Ionosphere model:
+> A review and description of an ionospheric benchmark.
+> *Reviews of Geophysics*, 60, e2022RG000792.
+> [doi:10.1029/2022RG000792](https://doi.org/10.1029/2022RG000792)
+
+**Non-default JF switches:** This repository disables Te/Ti/Tn (`jf(2)=.false.`)
+and ion composition (`jf(3)=.false.`) for Ne-only computation. Per the IRI
+documentation, any use of non-default JF switch values must be disclosed in
+publications.
+
 ## Updating Index Files
 
 The solar/magnetic index files must be updated periodically for current dates:
