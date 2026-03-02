@@ -20,6 +20,15 @@ batch processing:
 
 A shell script (`run_parallel.sh`) enables multi-core parallel execution.
 
+> **Disclaimer:** This is not the official IRI distribution. For the standard
+> IRI-2020 model, visit [irimodel.org](http://irimodel.org). This version is
+> optimized for electron density (Ne) only — temperature (Te, Ti, Tn) and ion
+> composition outputs are disabled. The core IRI library subroutines are
+> unmodified; all changes are in the custom driver programs. This software is
+> provided "as is", without warranty of any kind, express or implied, including
+> but not limited to the warranties of accuracy, completeness, or fitness for a
+> particular purpose. Use at your own risk.
+
 ## Modifications from Standard IRI-2020
 
 The core IRI library files (`irisub.for`, `irifun.for`, `iritec.for`, `iridreg.for`,
