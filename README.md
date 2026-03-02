@@ -239,50 +239,6 @@ Arguments are the same as `iri_ne`, plus:
 
 > **Note:** Requires `param.txt` and `alt.txt` in the same directory as `run_parallel.sh`.
 
-## Usage from R (tomoscand package)
-
-The `tomoscand` R package wraps these binaries via two functions in `R/iri.R`:
-
-**`get_iri_parameters(t1, lat_ax, long_ax, IRI_path)`**
-- Writes `lat_lon.txt`, runs `./iri_param`, reads `param.txt`
-- Returns `data.table` with NmF2, hmF2, NmE, hmE, B0, B1
-- Heights converted from km to metres in R output
-
-**`get_iri_profiles(t1, lat_ax, long_ax, alt_ax, IRI_path, params=NULL)`**
-- Writes `param.txt` and `alt.txt`, runs `./iri_ne` (or `./run_parallel.sh`)
-- Returns `data.table` with lat, long, alt, ne_iri
-- All units in metres and m^-3 in R output
-- Two modes:
-  - `params=NULL` → `jchoice=0`, IRI computes everything internally
-  - `params=<dt>` → `jchoice=1`, uses externally provided parameters
-- Automatically uses `run_parallel.sh` when grid > 500 points
-
-**Unit conversions** (Fortran uses km, R uses metres):
-
-| Conversion | Direction |
-|------------|-----------|
-| Altitudes | `alt_ax` (m) / 1000 → `alt.txt` (km) |
-| Heights | hmF2, hmE, B0 in `param.txt` (km) × 1000 → R output (m) |
-| Ne | `ne.txt` (electrons/cm^3) × 1e6 → R output (m^-3) |
-
-File I/O uses `data.table::fread`/`fwrite` for performance on large grids.
-
-## Performance
-
-Benchmarked on a full `tomoscand` analysis run (global 1-degree grid):
-
-| | User time | Wall-clock time |
-|---|-----------|-----------------|
-| Before optimization | 597s | 615s |
-| After optimization | 467s | **177s** (3.5x speedup) |
-
-Speedup sources:
-- Parallel `iri_ne` execution via `run_parallel.sh` (largest contributor)
-- `data.table::fread`/`fwrite` instead of `read.table`/`write.table` in R
-- Skipped redundant `iri_param` call when `params=NULL` (`jchoice=0`)
-- Disabled Te/Ti/Tn and ion composition in Fortran (Ne-only mode)
-- Cached altitude grid reads in Fortran (read `alt.txt` once, not per point)
-
 ## Updating Index Files
 
 The solar/magnetic index files must be updated periodically for current dates:
