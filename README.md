@@ -36,19 +36,17 @@ IRI-2020 distribution: `irifun.for`, `iritec.for`, `iridreg.for`, `iriflip.for`,
 `igrf.for`, `cira.for`, `rocdrift.for`.
 
 **`irisub.for`** has one modification:
-- Altitude grid caching — `alt.txt` is read once on the first `IRI_SUB` call
-  and cached using Fortran `SAVE` variables, instead of being re-read on every
-  call (eliminates ~65,000 redundant file reads on a global 1-degree grid).
-  Also fixes a bug in the original read loop (`iostat_alt` → `iostat`).
+- Altitude grid from `alt.txt` is cached using Fortran `SAVE` variables so it
+  is only read from disk on the first `IRI_SUB` call.
   The unmodified original is kept as `irisub_bu.for` for reference.
 
 The custom driver programs and scripts:
 
 **1. `iritest_ne.for`** (compiles to `iri_ne`)
 - Reads lat/lon grid + optional parameters from `param.txt`
-- Reads altitude axis from `alt.txt` (cached — read once, not per grid point)
-- Disables Te/Ti/Tn computation (`jf(2)=.false.`) — not needed for Ne-only
-- Disables ion composition (`jf(3)=.false.`) — not needed for Ne-only
+- Reads altitude axis from `alt.txt`
+- Disables Te/Ti/Tn computation (`jf(2)=.false.`)
+- Disables ion composition (`jf(3)=.false.`)
 - Per-parameter JF flag control: value `-1` in `param.txt` tells Fortran to use
   IRI internal defaults for that parameter (NmF2, hmF2, NmE, hmE, B0, B1)
 - Writes output to `ne.txt`
