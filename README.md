@@ -23,17 +23,25 @@ A shell script (`run_parallel.sh`) enables multi-core parallel execution.
 > **Disclaimer:** This is not the official IRI distribution. For the standard
 > IRI-2020 model, visit [irimodel.org](http://irimodel.org). This version is
 > optimized for electron density (Ne) only — temperature (Te, Ti, Tn) and ion
-> composition outputs are disabled. The core IRI library subroutines are
-> unmodified; all changes are in the custom driver programs. This software is
-> provided "as is", without warranty of any kind, express or implied, including
-> but not limited to the warranties of accuracy, completeness, or fitness for a
-> particular purpose. Use at your own risk.
+> composition outputs are disabled. Most core IRI library subroutines are
+> unmodified; `irisub.for` has a minor caching optimization (see below). This
+> software is provided "as is", without warranty of any kind, express or
+> implied, including but not limited to the warranties of accuracy,
+> completeness, or fitness for a particular purpose. Use at your own risk.
 
 ## Modifications from Standard IRI-2020
 
-The core IRI library files (`irisub.for`, `irifun.for`, `iritec.for`, `iridreg.for`,
-`iriflip.for`, `igrf.for`, `cira.for`, `rocdrift.for`) are **unmodified**. All changes are
-in the two custom test programs:
+The following core IRI library files are **unmodified** from the official
+IRI-2020 distribution: `irifun.for`, `iritec.for`, `iridreg.for`, `iriflip.for`,
+`igrf.for`, `cira.for`, `rocdrift.for`.
+
+**`irisub.for`** has one modification:
+- Altitude grid caching — `alt.txt` is read once on the first `IRI_SUB` call
+  and cached using Fortran `SAVE` variables, instead of being re-read on every
+  call (eliminates ~65,000 redundant file reads on a global 1-degree grid).
+  Also fixes a bug in the original read loop (`iostat_alt` → `iostat`).
+
+The custom driver programs and scripts:
 
 **1. `iritest_ne.for`** (compiles to `iri_ne`)
 - Reads lat/lon grid + optional parameters from `param.txt`
