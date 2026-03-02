@@ -40,6 +40,7 @@ IRI-2020 distribution: `irifun.for`, `iritec.for`, `iridreg.for`, `iriflip.for`,
   and cached using Fortran `SAVE` variables, instead of being re-read on every
   call (eliminates ~65,000 redundant file reads on a global 1-degree grid).
   Also fixes a bug in the original read loop (`iostat_alt` → `iostat`).
+  The unmodified original is kept as `irisub_bu.for` for reference.
 
 The custom driver programs and scripts:
 
